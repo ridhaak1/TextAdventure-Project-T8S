@@ -7,6 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextAdventure", "TextAdvent
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextAdventureAPI", "TextAdventureAPI\TextAdventureAPI.csproj", "{2D8404A6-75F1-48AE-B5DE-25D5AE4E6B0E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "TestProject1\TestProject1.csproj", "{B3956844-B70A-40F5-B4D6-E0F90AB10909}"
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextAdventure-IntgrationTests", "TextAdventure-IntgrationTests\TextAdventure-IntgrationTests.csproj", "{CD265D9F-68B2-4FCF-A83E-234C0C0BB5B4}"
 EndProject
 Global
@@ -23,6 +24,10 @@ Global
 		{2D8404A6-75F1-48AE-B5DE-25D5AE4E6B0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D8404A6-75F1-48AE-B5DE-25D5AE4E6B0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D8404A6-75F1-48AE-B5DE-25D5AE4E6B0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3956844-B70A-40F5-B4D6-E0F90AB10909}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3956844-B70A-40F5-B4D6-E0F90AB10909}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3956844-B70A-40F5-B4D6-E0F90AB10909}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3956844-B70A-40F5-B4D6-E0F90AB10909}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CD265D9F-68B2-4FCF-A83E-234C0C0BB5B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CD265D9F-68B2-4FCF-A83E-234C0C0BB5B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD265D9F-68B2-4FCF-A83E-234C0C0BB5B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
