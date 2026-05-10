@@ -1,0 +1,33 @@
+@host = http://localhost:5056
+
+### 1. Register
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+###
+
+### 2. Login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+###
+
+### 3. Me
+GET {{host}}/api/auth/me
+Authorization: Bearer PUT_YOUR_TOKEN_HERE
+
+###
+
+### 4. Keyshare
+GET {{host}}/api/keys/keyshare/room_vault
+Authorization: Bearer PUT_YOUR_TOKEN_HERE
