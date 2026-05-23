@@ -16,6 +16,8 @@ public class Program
             return;
         }
 
+        await TestSecureEndpoint();
+
         var world = GameSetup.CreateWorld();
         Console.WriteLine("\nWelkom bij de C# Text Adventure!");
         world.CurrentRoom.ShowDescription(world.Inventory);
@@ -189,4 +191,46 @@ public class Program
     }
 
     public static string? GetToken() => _jwtToken;
+
+    private static async Task TestSecureEndpoint()
+    {
+        const string apiBase = "https://localhost:7298";
+
+        using var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+
+        using var client = new HttpClient(handler)
+        {
+            BaseAddress = new Uri(apiBase)
+        };
+
+        if (!string.IsNullOrWhiteSpace(_jwtToken))
+        {
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _jwtToken);
+        }
+
+        try
+        {
+            var response = await client.GetAsync("/api/auth/me");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("\nSecure endpoint werkt:");
+                Console.WriteLine(content);
+            }
+            else
+            {
+                Console.WriteLine("\nGeen toegang tot secure endpoint.");
+            }
+        }
+        catch
+        {
+            Console.WriteLine("\nFout bij verbinden met secure endpoint.");
+        }
+    }
 }
