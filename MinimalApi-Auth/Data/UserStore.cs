@@ -26,5 +26,7 @@ namespace MinimalApi_Auth.Data
             var index = _users.FindIndex(u => u.Id == user.Id);
             if (index >= 0) _users[index] = user;
         }
+
+
     }
 }
