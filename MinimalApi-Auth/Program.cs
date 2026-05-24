@@ -7,6 +7,20 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Opstartvalidatie: crash vroeg als secrets niet geconfigureerd zijn ──
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey == "SET_VIA_USER_SECRETS_OR_ENV_VAR")
+{
+    throw new InvalidOperationException(
+        "JWT Key is niet geconfigureerd. Stel deze in via:\n" +
+        "  dotnet user-secrets set \"Jwt:Key\" \"<jouw-secret>\"\n" +
+        "of via een omgevingsvariabele: Jwt__Key");
+}
+if (jwtKey.Length < 32)
+{
+    throw new InvalidOperationException("JWT Key moet minstens 32 tekens lang zijn.");
+}
+
 // ── Register Services ────────────────────────────────────────
 builder.Services.AddSingleton<UserStore>();
 builder.Services.AddSingleton<HashService>();
@@ -26,7 +40,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(jwtKey))
+        };
+
+        // Geen interne foutdetails lekken naar de client
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                context.Response.Headers["WWW-Authenticate"] = "Bearer";
+                return Task.CompletedTask;
+            }
         };
     });
 
