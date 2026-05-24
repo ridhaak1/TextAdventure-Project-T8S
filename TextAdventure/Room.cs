@@ -9,6 +9,13 @@ public class Room
     public bool IsWin { get; init; }
     public bool MonsterAlive { get; set; }
 
+    public bool IsEncrypted { get; init; }
+    public string? EncryptedRoomId { get; init; }   // matches appsettings Keyshares key
+    public string? EncryptedContent { get; set; }    // base64 ciphertext; set at startup
+    public bool IsUnlocked { get; set; }
+
+
+
     public Dictionary<Direction, Room> Exits { get; } = new();
     private readonly Dictionary<string, Item> _items = new();
 

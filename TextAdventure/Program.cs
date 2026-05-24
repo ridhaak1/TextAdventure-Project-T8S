@@ -1,4 +1,9 @@
-﻿namespace TextAdventure;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Text.Json;
+
+namespace TextAdventure;
 
 public class Program
 {
@@ -52,7 +57,7 @@ public class Program
 
                 case "go" when input.Length > 1:
                     if (Enum.TryParse<Direction>(input[1], ignoreCase: true, out var dir))
-                        world.Move(dir);
+                        await world.Move(dir, TryUnlockRoomAsync);
                     else
                         Console.WriteLine($"Ongeldige richting '{input[1]}'. Kies: n, e, s, w");
                     break;
@@ -87,6 +92,84 @@ public class Program
         }
 
         Console.WriteLine(world.IsWon ? "\n--- GEWONNEN ---" : "\n--- GAME OVER ---");
+    }
+
+    public static async Task<bool> TryUnlockRoomAsync(Room room)
+    {
+        Console.WriteLine($"\n🔐 '{room.Name}' is versleuteld. Start ontsleutelingsproces...");
+
+        Console.WriteLine($"[*] Key share ophalen van API voor room '{room.EncryptedRoomId}'...");
+        string keyshare;
+        try
+        {
+            var resp = await Http.GetAsync($"/api/keys/keyshare/{room.EncryptedRoomId}");
+            if (!resp.IsSuccessStatusCode)
+            {
+                var err = await resp.Content.ReadFromJsonAsync<JsonElement>();
+                Console.WriteLine($"[!] Toegang geweigerd: {err.GetProperty("error").GetString()}");
+                return false;
+            }
+            var data = await resp.Content.ReadFromJsonAsync<JsonElement>();
+            keyshare = data.GetProperty("keyshare").GetString()!;
+            Console.WriteLine($"[+] Key share ontvangen.");
+        }
+        catch { Console.WriteLine("[!] API niet bereikbaar."); return false; }
+
+        Console.Write("[?] Voer je persoonlijke Passphrase in: ");
+        var passphrase = ReadPassword();
+
+        string certPassword = DerivePassword(keyshare, passphrase);
+        Console.WriteLine($"[*] Certificaatwachtwoord afgeleid (SHA256).");
+
+        Console.Write("[?] Pad naar CMS_Encryption_Key.pfx: ");
+        var pfxPath = Console.ReadLine()?.Trim() ?? "";
+        if (!System.IO.File.Exists(pfxPath))
+        {
+            Console.WriteLine("[!] PFX bestand niet gevonden.");
+            return false;
+        }
+
+        try
+        {
+            var cert = new X509Certificate2(pfxPath, certPassword);
+            using var rsa = cert.GetRSAPrivateKey()
+                ?? throw new Exception("Geen privésleutel gevonden in certificaat.");
+
+            byte[] encryptedBytes = Convert.FromBase64String(room.EncryptedContent!);
+            byte[] decryptedBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.OaepSHA256);
+            string content = Encoding.UTF8.GetString(decryptedBytes);
+
+            Console.WriteLine("\n[+] ✅ Ontsleuteling geslaagd!\n");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(content);
+            Console.ResetColor();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[!] Ontsleuteling mislukt: {ex.Message}");
+            return false;
+        }
+    }
+
+    private static string DerivePassword(string keyshare, string passphrase)
+    {
+        string combined = $"{keyshare}:{passphrase}";
+        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(combined));
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static string ReadPassword()
+    {
+        var sb = new StringBuilder();
+        ConsoleKeyInfo key;
+        while ((key = Console.ReadKey(true)).Key != ConsoleKey.Enter)
+        {
+            if (key.Key == ConsoleKey.Backspace && sb.Length > 0) sb.Length--;
+            else if (key.Key != ConsoleKey.Backspace) sb.Append(key.KeyChar);
+        }
+        Console.WriteLine();
+        return sb.ToString();
     }
 
     private static async Task<bool> LoginFlow()
@@ -201,11 +284,7 @@ public class Program
             ServerCertificateCustomValidationCallback =
                 HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
         };
-
-        using var client = new HttpClient(handler)
-        {
-            BaseAddress = new Uri(apiBase)
-        };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(apiBase) };
 
         if (!string.IsNullOrWhiteSpace(_jwtToken))
         {
@@ -216,7 +295,6 @@ public class Program
         try
         {
             var response = await client.GetAsync("/api/auth/me");
-
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();

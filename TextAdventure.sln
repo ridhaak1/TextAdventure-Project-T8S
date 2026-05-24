@@ -1,4 +1,3 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36915.13
@@ -12,6 +11,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextAdventure-IntgrationTests", "TextAdventure-IntgrationTests\TextAdventure-IntgrationTests.csproj", "{CD265D9F-68B2-4FCF-A83E-234C0C0BB5B4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinimalApi-Auth", "MinimalApi-Auth\MinimalApi-Auth.csproj", "{6357474B-1A4B-4C39-88D8-482C1FB8DD74}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Encryption", "Encryption\Encryption.csproj", "{60DD51F7-7745-4B1F-BDC0-F3B19141D445}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtraTests", "ExtraTests\ExtraTests.csproj", "{50B70FE5-39D0-4FE7-BF87-8987B7C0B0A5}"
 EndProject
@@ -41,6 +42,10 @@ Global
 		{6357474B-1A4B-4C39-88D8-482C1FB8DD74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6357474B-1A4B-4C39-88D8-482C1FB8DD74}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6357474B-1A4B-4C39-88D8-482C1FB8DD74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60DD51F7-7745-4B1F-BDC0-F3B19141D445}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60DD51F7-7745-4B1F-BDC0-F3B19141D445}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60DD51F7-7745-4B1F-BDC0-F3B19141D445}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60DD51F7-7745-4B1F-BDC0-F3B19141D445}.Release|Any CPU.Build.0 = Release|Any CPU
 		{50B70FE5-39D0-4FE7-BF87-8987B7C0B0A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{50B70FE5-39D0-4FE7-BF87-8987B7C0B0A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50B70FE5-39D0-4FE7-BF87-8987B7C0B0A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
