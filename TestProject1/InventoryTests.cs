@@ -1,8 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TextAdventure;
 
 namespace TestProject1
@@ -10,86 +5,55 @@ namespace TestProject1
     [TestClass]
     public class InventoryTests
     {
+        // Test: item toevoegen en daarna controleren of het aanwezig is
         [TestMethod]
-        public void AddItem_AddsItemToInventory()
+        public void AddItem_ItemToegevoegd_IsAanwezig()
         {
-            var inventory = new Inventory();
-            var item = new Item("Zwaard", "Een scherp zwaard.");
+            var inv = new Inventory();
+            inv.AddItem(new Item("Sleutel", "Gouden sleutel."));
 
-            inventory.AddItem(item);
-
-            Assert.IsTrue(inventory.HasItem("Zwaard"));
+            Assert.IsTrue(inv.HasItem("Sleutel"));
         }
 
-
+        // Test: item dat nooit werd toegevoegd mag niet gevonden worden
         [TestMethod]
-        public void AddItem_WithSameName_OverwritesExistingItem()
+        public void HasItem_ItemNietAanwezig_RetourneertFalse()
         {
-            var inventory = new Inventory();
-            var item1 = new Item("Schild", "Een houten schild.");
-            var item2 = new Item("Schild", "Een ijzeren schild.");
+            var inv = new Inventory();
 
-            inventory.AddItem(item1);
-            inventory.AddItem(item2);
-
-            Assert.IsTrue(inventory.HasItem("Schild"));
+            Assert.IsFalse(inv.HasItem("Zwaard"));
         }
 
+        // Test: HasItem is hoofdlettersonge­voelig (case-insensitive)
         [TestMethod]
-        public void AddItem_MultipleDifferentItems_AllAreAdded()
+        public void HasItem_HoofdletterOnGevoelig_VindtItem()
         {
-            var inventory = new Inventory();
+            var inv = new Inventory();
+            inv.AddItem(new Item("Zwaard", "Scherp."));
 
-            inventory.AddItem(new Item("Zwaard", "Een scherp zwaard."));
-            inventory.AddItem(new Item("Boog", "Een houten boog."));
-            inventory.AddItem(new Item("Staf", "Een magische staf."));
-
-            Assert.IsTrue(inventory.HasItem("Zwaard"));
-            Assert.IsTrue(inventory.HasItem("Boog"));
-            Assert.IsTrue(inventory.HasItem("Staf"));
+            Assert.IsTrue(inv.HasItem("ZWAARD"));
         }
 
+        // Test: lege inventory geeft de tekst "Niets" terug
         [TestMethod]
-        public void HasItem_ReturnsTrue_WhenItemIsPresent()
+        public void GetDisplayList_LegeInventory_ToontNiets()
         {
-            var inventory = new Inventory();
-            inventory.AddItem(new Item("Potion", "Een helende drank."));
+            var inv = new Inventory();
 
-            Assert.IsTrue(inventory.HasItem("Potion"));
+            Assert.AreEqual("Niets", inv.GetDisplayList());
         }
 
-
+        // Test: meerdere items worden allebei getoond in de lijst
         [TestMethod]
-        public void HasItem_ReturnsFalse_WhenItemIsNotPresent()
+        public void GetDisplayList_MetItems_ToontAlleNamen()
         {
-            var inventory = new Inventory();
+            var inv = new Inventory();
+            inv.AddItem(new Item("Sleutel", "Gouden."));
+            inv.AddItem(new Item("Zwaard", "Scherp."));
+            var list = inv.GetDisplayList();
 
-            Assert.IsFalse(inventory.HasItem("Potion"));
-        }
-
-        [TestMethod]
-        public void HasItem_ReturnsFalse_OnEmptyInventory()
-        {
-            var inventory = new Inventory();
-
-            Assert.IsFalse(inventory.HasItem("Zwaard"));
-        }
-
-        [TestMethod]
-        public void GetDisplayList_OnEmptyInventory_ReturnsNiets()
-        {
-            var inventory = new Inventory();
-
-            Assert.AreEqual("Niets", inventory.GetDisplayList());
-        }
-
-        [TestMethod]
-        public void GetDisplayList_IsNotNiets_AfterAddItem()
-        {
-            var inventory = new Inventory();
-            inventory.AddItem(new Item("Helm", "Een ijzeren helm."));
-
-            Assert.AreNotEqual("Niets", inventory.GetDisplayList());
+            Assert.IsTrue(list.Contains("Sleutel"));
+            Assert.IsTrue(list.Contains("Zwaard"));
         }
     }
 }

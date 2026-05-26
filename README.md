@@ -1,126 +1,106 @@
-# Secure Text Adventure
+# Text Adventure – Testing & Security Project
 
 ## Projectstructuur
 
-```
-projectmap/
-├── MinimalApi-Auth/        → Persoon 1: Minimal API met authenticatie & JWT
-├── TextAdventure/          → Persoon 3: Console-game met secure coding
-├── TestProject1/           → Unit tests
-├── TextAdventure-IntgrationTests/ → Integratietests
-└── README.md               → Dit bestand
-```
+| Project | Type | Beschrijving |
+|---------|------|-------------|
+| `TextAdventure` | Console app | Het spelzelf |
+| `MinimalApi-Auth` | Web API | Authenticatie, hashing, keyshares |
+| `TestProject1` | Unit tests | Tests voor Item, Room, Inventory |
+| `TextAdventure-IntgrationTests` | Integratietests | Samenwerking tussen klassen |
 
 ---
 
 ## Hoe starten
 
-### 1. API opstarten (persoon 1)
+### Stap 1 – API starten
+1. Rechtsklik op `MinimalApi-Auth` → **Set as Startup Project**
+2. Druk op **Run** (of F5)
+3. Swagger opent op `https://localhost:7298/swagger`
 
-Stel eerst de JWT-secret in via user-secrets (zodat deze **nooit** in Git terechtkomt):
+### Stap 2 – Account aanmaken via Swagger
+1. Ga naar `POST /api/auth/register`
+2. Vul een gebruikersnaam (min. 3 tekens) en wachtwoord (min. 8 tekens) in
 
-```bash
-cd MinimalApi-Auth
-dotnet user-secrets init
-dotnet user-secrets set "Jwt:Key" "a8f3c91e7d5b4c6f9a2e8d1c4b7f6a9e3d8c1b5f7a2e9d6c4b8f1a3e7d9c2"
-dotnet run
+### Stap 3 – Spel starten
+1. Rechtsklik op `TextAdventure` → **Set as Startup Project**
+2. Druk op **Run**
+3. Log in met het aangemaakte account
+
+---
+
+## Spelcommando's
+
+| Commando | Actie |
+|---------|-------|
+| `go n` / `go e` / `go s` / `go w` | Beweeg naar richting |
+| `take sleutel` | Pak een item op |
+| `fight` | Vecht tegen het monster |
+| `unlock room_vault` | Ontgrendel de kluis (alle spelers) |
+| `unlock room_godmode` | Ontgrendel de geheime kamer (alleen Admin) |
+| `inventory` | Bekijk je items |
+| `look` | Beschrijving van de kamer |
+| `help` | Alle commando's |
+| `quit` | Stop het spel |
+
+---
+
+## Kaart van het spel
+
+```
+              [De Uitgang] (vereist Sleutel)
+                   N
+                   |
+[Dodelijke Gang] W -- [Start] -- E -- [Schatkamer] -- E -- [Kluis*]
+                   |
+                   S
+        [Kelder (Zwaard, hint: 'draken')] -- E -- [Geheime Kamer**]
+                   |
+                   S
+             [Monsterkamer (hint: 'geheim')]
 ```
 
-De API draait daarna op:
-- HTTP:  `http://localhost:5056`
-- HTTPS: `https://localhost:7298`
-- Swagger: `https://localhost:7298/swagger`
-
-### 2. Game opstarten (persoon 3/4)
-
-```bash
-cd TextAdventure
-dotnet run
-```
-
-Het spel vraagt automatisch om in te loggen voor je kan spelen.
+`*`  Kluis = `unlock room_vault` (passphrase: in de Kelder)
+`**` Geheime Kamer = `unlock room_godmode` (passphrase: in de Monsterkamer, vereist Admin-rol)
 
 ---
 
-## Deel 1 — Authenticatie & Minimal API (Persoon 1)
+## Security (Deel 2)
 
-### Endpoints
+### Authenticatie & Autorisatie
+- **SHA-256 hashing** via `HashService` met `FixedTimeEquals` (timing-attack preventie)
+- **JWT token** (2 uur geldig, met rol Player/Admin)
+- **Lockout** na 3 mislukte inlogpogingen
 
-| Methode | Pad                          | Auth vereist | Beschrijving                         |
-|---------|------------------------------|:------------:|--------------------------------------|
-| POST    | `/api/auth/register`         | Nee          | Nieuwe gebruiker registreren         |
-| POST    | `/api/auth/login`            | Nee          | Inloggen, JWT-token ontvangen        |
-| GET     | `/api/auth/me`               | Ja (Bearer)  | Huidig ingelogde gebruiker opvragen  |
-| GET     | `/api/keys/keyshare/{roomId}`| Ja (Bearer)  | Keyshare ophalen voor versleutelde kamer |
+### HTTPS
+- API draait op `https://localhost:7298`
+- Spel verbindt via HTTPS met `DangerousAcceptAnyServerCertificateValidator` (dev-certificaat)
 
-### Beveiliging
+### Encryptie (X.509/CMS)
+- **Twee kamers** versleuteld via `EnvelopedCms` (X.509 certificaat, RSA 2048)
+- `.pfx` = certificaat beschermd met wachtwoord, `.enc` = versleutelde inhoud
+- Sleutel = **keyshare** (opgehaald via HTTPS API) + **passphrase** (gevonden in het spel)
 
-- **SHA-256 hashing** via `HashService` — wachtwoorden worden nooit in plaintext opgeslagen.
-- **Timing-safe vergelijking** via `CryptographicOperations.FixedTimeEquals` — beschermt tegen timing-aanvallen.
-- **Lockout** na 3 foutieve inlogpogingen — account wordt geblokkeerd (HTTP 403).
-- **JWT-tokens** verlopen na 2 uur.
-- **Opmerking over salting**: SHA-256 zonder salt is kwetsbaar voor rainbow table-aanvallen. Dit is conform de lesvereisten, maar in productie zou bcrypt of Argon2 de voorkeur hebben.
+| Kamer | RoomId | Passphrase hint | Toegang |
+|-------|--------|-----------------|---------|
+| Kluis | `room_vault` | inscriptie in Kelder: `draken` | Alle spelers |
+| Geheime Kamer | `room_godmode` | briefje in Monsterkamer: `geheim` | Admin only |
 
----
+### Keyshares (API – HTTPS)
+- `GET /api/keys/keyshare/room_vault` → vereist geldig JWT
+- `GET /api/keys/keyshare/room_godmode` → vereist Admin-rol (anders 403)
 
-## Deel 2 — Encryptie (Persoon 2)
-
-- Minstens 2 kamers zijn versleuteld via X.509/CMS (`.enc` bestanden).
-- Decryptie vereist twee elementen:
-  1. **Keyshare** — opgehaald via `/api/keys/keyshare/{roomId}` met een geldig JWT-token.
-  2. **Passphrase** — te vinden ergens in de game zelf.
-- Alleen de combinatie van beide kan een kamer ontgrendelen.
-
----
-
-## Deel 3 — Secure Coding (Persoon 3)
-
-### Input validatie in de game
-
-Alle console-invoer wordt defensief verwerkt:
-
-- `Console.ReadLine()` wordt nooit rechtstreeks gebruikt zonder null-check.
-- Lege of witruimte-invoer wordt genegeerd (geen crash).
-- `Split` gebruikt `RemoveEmptyEntries` zodat dubbele spaties geen problemen geven.
-- `Enum.TryParse` met `ignoreCase: true` — ongeldige richtingen geven een duidelijke foutmelding, geen exception.
-- Commando's zonder verplicht argument (`go`, `take`) geven een hulpboodschap in plaats van te crashen.
-
-### Foutafhandeling bij API-communicatie
-
-- `HttpRequestException` wordt opgevangen → duidelijke melding zonder stacktrace.
-- Alle andere uitzonderingen worden ook opgevangen → geen interne details lekken naar de gebruiker.
-- HTTP 403 (account vergrendeld) geeft een specifieke melding.
-- Na 3 mislukte loginpogingen in de game stopt de applicatie netjes.
-
-### Wachtwoord invoer
-
-- Wachtwoord wordt gemaskeerd ingevoerd (sterretjes `*`) via `Console.ReadKey(intercept: true)`.
-- Backspace werkt correct tijdens invoer.
-- Fallback naar gewone `ReadLine()` als de console geen `ReadKey` ondersteunt (testomgeving).
-
-### Secrets beheer
-
-- De JWT-secret staat **nooit** hardcoded in broncode of `appsettings.json`.
-- In development: gebruik `dotnet user-secrets` (zie Hoe starten).
-- In productie: gebruik een omgevingsvariabele `Jwt__Key`.
-- De API valideert bij opstart of de secret correct geconfigureerd is en weigert te starten als dat niet het geval is.
-- `secrets.json` en `.env` bestanden staan in `.gitignore`.
-- JWT-token wordt in het geheugen bewaard (nooit op schijf of hardcoded).
+### Secure coding
+- Alle input gevalideerd (geen crashes door lege/foute invoer)
+- JWT Key staat in `appsettings.json` (voor productie: gebruik user-secrets)
 
 ---
 
-## Deel 4 — Integratie API & Game (Persoon 4)
+## Tests uitvoeren
 
-- Communicatie via HTTPS (`https://localhost:7298`).
-- JWT-token wordt meegestuurd als `Authorization: Bearer <token>` header.
-- Login is verplicht voor spelstart — geen token = geen spel.
-- Dev-certificaat wordt geaccepteerd via `DangerousAcceptAnyServerCertificateValidator` (enkel development).
+Open **Test Explorer** in Visual Studio → **Run All Tests**
 
----
-
-## ZIP-inhoud checklist
-
-- [x] Volledige broncode (MinimalApi-Auth, TextAdventure, tests)
-- [x] `.enc` bestanden (versleutelde kamers — persoon 2)
-- [x] `secrets.json` (apart, niet in Git)
-- [x] `README.md` (dit bestand)
+| Testproject | Inhoud |
+|-------------|--------|
+| `TestProject1` | ItemTests (3), RoomTests (8), InventoryTests (5) |
+| `TextAdventure-IntgrationTests` | MovementIntTest (7) |
