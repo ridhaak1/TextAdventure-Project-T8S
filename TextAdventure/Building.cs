@@ -11,7 +11,7 @@ public class Building
 
     public Building(Room startRoom) => CurrentRoom = startRoom;
 
-    public void Move(Direction dir)
+    public async Task Move(Direction dir, Func<Room, Task<bool>> unlockCallback)
     {
         if (!CurrentRoom.Exits.TryGetValue(dir, out var nextRoom))
         {
@@ -31,6 +31,15 @@ public class Building
             Console.WriteLine($"De deur zit op slot. Je hebt een {nextRoom.RequiredItem} nodig.");
             return;
         }
+
+
+        if (nextRoom.IsEncrypted && !nextRoom.IsUnlocked)
+        {
+            bool unlocked = await unlockCallback(nextRoom);
+            if (!unlocked) return;
+            nextRoom.IsUnlocked = true;
+        }
+
 
         CurrentRoom = nextRoom;
         if (CurrentRoom.IsDeadly) IsGameOver = true;
