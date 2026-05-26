@@ -7,4 +7,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Pakket voor X.509/CMS versleuteling (EnvelopedCms) -->
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" />
+  </ItemGroup>
+
 </Project>
